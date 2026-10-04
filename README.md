@@ -8,7 +8,7 @@ GPS-Denied Visual SLAM: Autonomous visual/inertial odometry enabling continuous 
 Zero-Trust Telemetry & Data Sovereignty: Cryptographic hardware secure enclave with an air-gap guarantee—ensuring zero flight logs, imagery, or 3D scan data touch third-party cloud servers without operator authorization.
 Open Architecture: Modular hot-swap payload bay and open Python SDK supporting custom sensors, multispectral cameras, and autonomous mission routines.
 
-Aircraft Specifications
+## Aircraft Specifications
 
 | System Attribute | ARES (Tactical / Defense) | NOMAD (Explorer / Mapping) |
 
