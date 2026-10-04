@@ -1329,9 +1329,8 @@
             console.error('OMNI AI: chatbot markup not found - chatbot not initialised.');
             return;
         }
-
-        const API_KEY = "AQ.Ab8RN6Kx-WYfEtTZdaM9jXarymMf-klNtFo21XDzGOX2oYcQ-Q";
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        
+        const API_URL = `omni-proxy.g0kuop2507.workers.dev`;
 
         /* ---------- Knowledge base + system instruction ---------- */
         const kbNode = document.getElementById('omni-kb');
