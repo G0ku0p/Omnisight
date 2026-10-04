@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnisight Drones | Master the Air. Map the Ground.</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            base: '#050608',
+                            dark: '#0a0d12',
+                            card: 'rgba(15, 20, 28, 0.75)',
+                            cyan: '#00f2fe',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            crimson: '#ff3344',
+                            cotton: '#f3f4f6'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scanline': 'scanline 4s linear infinite',
+                    },
+                    keyframes: {
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(1000%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050608;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        }
+
+        /* Glassmorphism panel */
+        .glass-panel {
+            background: rgba(13, 17, 23, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-glow {
+            background: rgba(10, 14, 20, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            box-shadow: 0 0 30px -5px rgba(0, 242, 254, 0.15);
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.02),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.02)
+            );
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Scroll reveal animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Glowing HUD text */
+        .glow-cyan {
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+        }
+        .glow-red {
+            text-shadow: 0 0 12px rgba(255, 51, 68, 0.6);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050608;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+    
+        /* Chat Markdown Styling */
+        #chat-messages ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        #chat-messages li { margin-bottom: 0.25rem; }
+        #chat-messages p { margin-bottom: 0.5rem; }
+        #chat-messages p:last-child { margin-bottom: 0; }
+        #chat-messages strong { font-weight: 700; color: #fff; }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="font-sans antialiased selection:bg-brand-cyan selection:text-black">
+
+    <header class="fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-3.5 border-b border-white/10 bg-brand-base/80 backdrop-blur-md transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="#hero" class="flex items-center gap-3 group">
+                <div class="relative w-8 h-8 rounded-lg bg-gradient-to-br from-brand-cyan to-blue-600 p-[1px] flex items-center justify-center">
+                    <div class="w-full h-full bg-brand-base rounded-[7px] flex items-center justify-center">
+                        <svg class="w-4 h-4 text-brand-cyan group-hover:rotate-45 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="font-display font-bold tracking-wider text-base uppercase text-white">OMNISIGHT</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+                <a href="#hero" class="hover:text-brand-cyan transition-colors">Telemetry</a>
+                <a href="#models" class="hover:text-brand-cyan transition-colors">Aircraft</a>
+                <a href="#sim-hud" class="hover:text-brand-cyan transition-colors">Flight HUD & Scan</a>
+                <a href="#tech" class="hover:text-brand-cyan transition-colors">Omni-Core</a>
+                <a href="#specs" class="hover:text-brand-cyan transition-colors">Specs Matrix</a>
+            </nav>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+                <a href="#models" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider bg-brand-cyan text-black hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(0,242,254,0.4)] transition-all">
+                    Pre-Order
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section id="hero" class="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-16">
+        <!-- Direct HTML5 Looping Background Video -->
+        <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <video id="bg-drone-video" autoplay muted loop playsinline class="w-full h-full object-cover scale-[1.02] filter brightness-90 contrast-105">
+                <!-- High-res cinematic mountain drone flight -->
+                <source src="https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-snowy-mountain-peaks-42407-large.mp4" type="video/mp4">
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+            </video>
+
+            <!-- High-tech Cinematic Vignette & Gradients -->
+            <div class="absolute inset-0 bg-gradient-to-b from-[#050608]/75 via-[#050608]/40 to-[#050608] z-10"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(5,6,8,0.85)_100%)] z-10"></div>
+            <div class="absolute inset-0 scanlines opacity-30 z-10"></div>
+        </div>
+
+        <!-- Cockpit HUD Floating Telemetry (Top Corners) -->
+        <div class="absolute top-24 left-4 sm:left-8 z-20 hidden md:block">
+            <div class="glass-panel px-4 py-3 rounded-xl font-mono text-xs text-gray-400 space-y-1.5 border-l-2 border-brand-cyan">
+                <div class="flex items-center justify-between gap-6">
+                    <span class="text-white/60">SYS_STATUS</span>
+                    <span class="text-brand-cyan flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-brand-cyan animate-ping"></span> OPTIMAL
+                    </span>
+                </div>
+                <div class="flex items-center justify-between gap-6">
+                    <span class="text-white/60">GPS_LOCK</span>
+                    <span class="text-emerald-400 font-bold" id="tele-gps">RTK 28 SATS (0.01m)</span>
+                </div>
+                <div class="flex items-center justify-between gap-6">
+                    <span class="text-white/60">COORDINATES</span>
+                    <span class="text-white font-mono" id="tele-coords">46°30'12"N 8°02'44"E</span>
+                </div>
+                <div class="flex items-center justify-between gap-6">
+                    <span class="text-white/60">BARO ALT</span>
+                    <span class="text-brand-cyan font-bold" id="tele-alt">2,842 M MSL</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute top-24 right-4 sm:right-8 z-20 hidden md:block">
+            <div class="glass-panel px-4 py-3 rounded-xl font-mono text-xs text-gray-400 space-y-1.5 border-r-2 border-brand-cyan text-right">
+                <div class="flex items-center justify-end gap-3">
+                    <span class="text-brand-cyan font-bold" id="tele-link">99.4% AES-256</span>
+                    <span class="text-white/60">RF_UPLINK</span>
+                </div>
+                <div class="flex items-center justify-end gap-3">
+                    <span class="text-amber-400 font-bold">22.8 m/s (44.3 kt)</span>
+                    <span class="text-white/60">AIRSPEED</span>
+                </div>
+                <div class="flex items-center justify-end gap-3">
+                    <span class="text-emerald-400 font-bold" id="tele-battery">87% [24.8V]</span>
+                    <span class="text-white/60">BATTERY</span>
+                </div>
+                <div class="flex items-center justify-end gap-3">
+                    <span class="text-brand-cyan font-bold">LIDAR 360° ACTIVE</span>
+                    <span class="text-white/60">SENSOR</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Crosshair Reticle Graphic -->
+        <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none opacity-25">
+            <div class="w-[340px] h-[340px] sm:w-[500px] sm:h-[500px] rounded-full border border-dashed border-brand-cyan/40 relative flex items-center justify-center">
+                <div class="w-16 h-16 border-t-2 border-b-2 border-brand-cyan/60 rounded-full"></div>
+                <div class="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-brand-cyan/40 to-transparent"></div>
+                <div class="absolute h-full w-[1px] bg-gradient-to-b from-transparent via-brand-cyan/40 to-transparent"></div>
+            </div>
+        </div>
+
+        <!-- Main Hero Copy & Controls -->
+        <div class="relative z-20 max-w-5xl mx-auto px-6 text-center flex flex-col items-center">
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 backdrop-blur-md mb-6 reveal">
+                <span class="w-2 h-2 rounded-full bg-brand-cyan animate-pulse"></span>
+                <span class="text-xs font-mono font-medium text-brand-cyan tracking-wider uppercase">Autonomous Dual-Platform Aviation</span>
+            </div>
+
+            <!-- Title -->
+            <h1 class="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.1] reveal delay-100">
+                Master the Air.<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-white to-blue-400 glow-cyan">
+                    Map the Ground.
+                </span>
+            </h1>
+
+            <p class="max-w-2xl text-base sm:text-lg text-gray-300 font-normal leading-relaxed mb-10 reveal delay-200">
+                The world’s first unified drone architecture, engineered by <strong class="text-white">Omnisight</strong> from the ground up. Harnessing real-time SLAM, LiDAR topography, and military-grade autonomy for tactical reconnaissance and boundary-pushing exploration.
+            </p>
+
+            <!-- CTA Cluster -->
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full justify-center reveal delay-300">
+                <a href="#models" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-brand-cyan text-brand-base font-bold text-sm uppercase tracking-wider hover:bg-white hover:shadow-[0_0_30px_rgba(0,242,254,0.6)] transition-all flex items-center justify-center gap-3">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Explore Models
+                </a>
+                <a href="#sim-hud" class="w-full sm:w-auto px-8 py-4 rounded-xl glass-panel text-white font-semibold text-sm hover:border-brand-cyan/50 hover:bg-white/10 transition-all flex items-center justify-center gap-2 border border-white/15">
+                    <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Live Sensor HUD Demo
+                </a>
+            </div>
+
+            <!-- Bottom Live Video Bar Controls -->
+            <div class="mt-14 flex items-center gap-4 py-2 px-5 rounded-full glass-panel text-xs font-mono text-gray-400 border border-white/10">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                    <span>LIVE FEED // 4K 60FPS RAW</span>
+                </span>
+                <span class="text-white/20">|</span>
+                <span id="video-timer">00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Scroll Anchor -->
+        <a href="#models" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center text-gray-400 hover:text-brand-cyan transition-colors">
+            <span class="text-[10px] font-mono tracking-widest uppercase mb-1">Scroll to inspect</span>
+            <svg class="w-5 h-5 animate-bounce text-brand-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+        </a>
+    </section>
+
+    <section id="models" class="py-28 px-4 sm:px-8 bg-brand-dark border-t border-white/10 relative z-20">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <div class="inline-block font-mono text-xs uppercase tracking-widest text-brand-cyan mb-2">Architectural Duality</div>
+                <h2 class="font-display text-3xl sm:text-5xl font-bold text-white mb-4">One Unified Brain. Two Specialized Craft.</h2>
+                <p class="text-gray-400 text-sm sm:text-base">
+                    Both models share the revolutionary Omnisight Core edge processor, yet they are custom-tailored for polar opposite operating environments.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- ARES (Defense / Tactical) -->
+                <div class="glass-panel-glow relative rounded-3xl p-6 sm:p-10 flex flex-col justify-between border-t-2 border-red-500/80 reveal group">
+                    <div class="absolute -top-3.5 left-8 px-4 py-1 rounded-full bg-red-500 text-black font-mono text-xs font-bold uppercase tracking-wider">
+                        Tactical / Defense Platform
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-start mt-2 mb-6">
+                            <div>
+                                <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white tracking-tight">ARES</h3>
+                                <p class="text-xs font-mono text-red-400 mt-1">OMNISIGHT-DEFENSE // MK-IV</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl font-display font-bold text-white">₹8,99,000</span>
+                                <span class="block text-[11px] font-mono text-gray-400">MIL-SPEC CERTIFIED</span>
+                            </div>
+                        </div>
+
+                        <p class="text-gray-300 text-sm leading-relaxed mb-8">
+                            Engineered for high-threat, contested theaters. Ares combines high-density LiDAR, FLIR Boson long-wave thermal imaging, and electronic anti-jamming to navigate GPS-denied combat airspace and map subterranean tunnels autonomously.
+                        </p>
+
+                        <!-- Key Spec Badges -->
+                        <div class="grid grid-cols-3 gap-3 mb-8 text-center font-mono">
+                            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="block text-xs text-gray-400">SPEED</span>
+                                <span class="text-base sm:text-lg font-bold text-red-400">140 km/h</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="block text-xs text-gray-400">PAYLOAD</span>
+                                <span class="text-base sm:text-lg font-bold text-white">4.2 kg</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="block text-xs text-gray-400">MAX RANGE</span>
+                                <span class="text-base sm:text-lg font-bold text-white">28 km</span>
+                            </div>
+                        </div>
+
+                        <!-- Highlights list -->
+                        <ul class="space-y-3 text-xs sm:text-sm text-gray-200 font-mono mb-8">
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span>AES-256 Quantum-Resistant Encrypted Telemetry</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span>FLIR Boson Thermal + 640x512 Night Vision Pod</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span>Anti-Jamming Frequency Hopping (FHSS 900MHz / 2.4GHz)</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span>Carbon-Titanium Exo-frame rated IP67 All-Weather</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Visual Imagery Card with Hover Scale -->
+                    <div class="relative h-60 w-full rounded-2xl overflow-hidden border border-white/10 group-hover:border-red-500/50 transition-all">
+                        <img src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?q=80&w=1200&auto=format&fit=crop" alt="Omnisight Ares Tactical Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-75">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+                        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between font-mono text-xs text-gray-300">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span> THERMAL OVERLAY ACTIVE
+                            </span>
+                            <span class="text-red-400 font-bold">ARMED // READY</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex gap-3">
+                        <button type="button" onclick="askOmniAbout('Ares tactical specs and payload capacities')" class="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 hover:bg-red-500 hover:text-white font-mono text-xs font-semibold uppercase tracking-wider transition-all">
+                            Inquire Defense Contract
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NOMAD (Civilian / Explorer) -->
+                <div class="glass-panel-glow relative rounded-3xl p-6 sm:p-10 flex flex-col justify-between border-t-2 border-brand-cyan reveal delay-100 group">
+                    <div class="absolute -top-3.5 left-8 px-4 py-1 rounded-full bg-brand-cyan text-black font-mono text-xs font-bold uppercase tracking-wider">
+                        Creator / Survey Platform
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-start mt-2 mb-6">
+                            <div>
+                                <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white tracking-tight">NOMAD</h3>
+                                <p class="text-xs font-mono text-brand-cyan mt-1">OMNISIGHT-CIVIL // MK-II</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl font-display font-bold text-white">₹1,49,999</span>
+                                <span class="block text-[11px] font-mono text-gray-400">DGCA NANO-CLASS (&lt;250 G)</span>
+                            </div>
+                        </div>
+
+                        <p class="text-gray-300 text-sm leading-relaxed mb-8">
+                            Weighing just 249 grams, Nomad delivers full photogrammetry, high-resolution topographical modeling, and autonomous terrain tracing. Perfect for alpine expeditions, geological research, and cinematographers mapping deep backcountry.
+                        </p>
+
+                        <!-- Key Spec Badges -->
+                        <div class="grid grid-cols-3 gap-3 mb-8 text-center font-mono">
+                            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="block text-xs text-gray-400">WEIGHT</span>
+                                <span class="text-base sm:text-lg font-bold text-brand-cyan">249 g</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="block text-xs text-gray-400">FLIGHT TIME</span>
+                                <span class="text-base sm:text-lg font-bold text-white">47 mins</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="block text-xs text-gray-400">VIDEO</span>
+                                <span class="text-base sm:text-lg font-bold text-white">8K RAW</span>
+                            </div>
+                        </div>
+
+                        <!-- Highlights list -->
+                        <ul class="space-y-3 text-xs sm:text-sm text-gray-200 font-mono mb-8">
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+                                <span>Zero-Registration Sub-250g Ultra-Portable Airframe</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+                                <span>Onboard Photogrammetry 3D Mesh Generator</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+                                <span>Sony 1-Inch Starlight Night Sensor (f/1.8 aperture)</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+                                <span>Autonomous Orbit, Waypoint & Cable-Cam Cinematic Modes</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Visual Imagery Card with Hover Scale -->
+                    <div class="relative h-60 w-full rounded-2xl overflow-hidden border border-white/10 group-hover:border-brand-cyan/50 transition-all">
+                        <img src="https://images.unsplash.com/photo-1527977966376-1c8408f9f108?q=80&w=1200&auto=format&fit=crop" alt="Omnisight Nomad Explorer Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-75">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+                        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between font-mono text-xs text-gray-300">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-brand-cyan"></span> 3D MESH SCANNER ACTIVE
+                            </span>
+                            <span class="text-brand-cyan font-bold">READY FOR DEPLOY</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex gap-3">
+                        <button type="button" onclick="askOmniAbout('Nomad photogrammetry and camera features')" class="flex-1 py-3 rounded-xl bg-brand-cyan/20 border border-brand-cyan/40 text-brand-cyan hover:bg-brand-cyan hover:text-black font-mono text-xs font-semibold uppercase tracking-wider transition-all">
+                            Configure Nomad Package
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sim-hud" class="py-24 px-4 sm:px-8 bg-[#030406] border-t border-white/10 relative z-20">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 reveal">
+                <div>
+                    <span class="font-mono text-xs text-brand-cyan tracking-widest uppercase">Live Interactive Testbed</span>
+                    <h2 class="font-display text-3xl sm:text-5xl font-bold text-white mt-1">Cockpit HUD & Wireframe Scanner</h2>
+                </div>
+                <p class="text-gray-400 text-xs sm:text-sm max-w-md mt-4 md:mt-0 font-mono">
+                    Interact with real flight sensor controls below to test real-time attitude, artificial horizon, synthetic terrain mesh rendering, and thermal vision modes.
+                </p>
+            </div>
+
+            <!-- The Simulator Console Container -->
+            <div class="glass-panel rounded-3xl p-4 sm:p-8 border border-white/15 relative overflow-hidden">
+                <div class="grid lg:grid-cols-12 gap-6 items-center">
+                    
+                    <!-- HUD Canvas (Centerpiece) -->
+                    <div class="lg:col-span-8 relative aspect-[16/10] bg-[#070a0e] rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col justify-between p-4 sm:p-6">
+                        <!-- Canvas Element for dynamic horizon & wireframe terrain -->
+                        <canvas id="hud-canvas" class="absolute inset-0 w-full h-full"></canvas>
+                        
+                        <!-- HUD Corner Overlays -->
+                        <div class="relative z-10 flex justify-between items-start font-mono text-xs">
+                            <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-brand-cyan">
+                                <span class="text-white/60">SYS:</span> AUTOPILOT [ENGAGED]
+                            </div>
+                            <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-white flex items-center gap-2">
+                                <span id="hud-mode-badge" class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+                                <span id="hud-mode-text">RGB OPTICAL</span>
+                            </div>
+                        </div>
+
+                        <!-- Pitch & Roll dynamic text indicator -->
+                        <div class="relative z-10 flex justify-between items-end font-mono text-xs text-gray-400">
+                            <div class="space-y-1 bg-black/60 backdrop-blur-md p-3 rounded-lg border border-white/10">
+                                <div>PITCH: <span id="hud-pitch-val" class="text-brand-cyan font-bold">+04.2°</span></div>
+                                <div>ROLL: <span id="hud-roll-val" class="text-brand-cyan font-bold">-02.1°</span></div>
+                                <div>YAW: <span id="hud-yaw-val" class="text-white font-bold">284° WNW</span></div>
+                            </div>
+                            <div class="text-right space-y-1 bg-black/60 backdrop-blur-md p-3 rounded-lg border border-white/10">
+                                <div>ALT: <span id="hud-alt-val" class="text-brand-cyan font-bold">1,420 m</span></div>
+                                <div>VERT SPD: <span class="text-emerald-400 font-bold">+2.4 m/s</span></div>
+                                <div>TERRAIN CLEAR: <span class="text-amber-400 font-bold">340 m</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulator Flight Controls -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="bg-white/5 rounded-2xl p-5 border border-white/10 space-y-5">
+                            <h4 class="font-display font-bold text-white text-base flex items-center justify-between">
+                                <span>Sensor & Flight Controls</span>
+                                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-cyan/20 text-brand-cyan">ONLINE</span>
+                            </h4>
+
+                            <!-- Mode Selector -->
+                            <div>
+                                <label class="text-xs font-mono text-gray-400 block mb-2">SENSOR VISION MODE</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" id="btn-mode-rgb" class="py-2 text-xs font-mono rounded-lg bg-brand-cyan text-black font-bold transition-all">RGB</button>
+                                    <button type="button" id="btn-mode-lidar" class="py-2 text-xs font-mono rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all">LiDAR</button>
+                                    <button type="button" id="btn-mode-thermal" class="py-2 text-xs font-mono rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all">FLIR</button>
+                                </div>
+                            </div>
+
+                            <!-- Pitch Slider -->
+                            <div>
+                                <div class="flex justify-between text-xs font-mono text-gray-300 mb-1">
+                                    <span>GIMBAL PITCH</span>
+                                    <span id="label-pitch">0°</span>
+                                </div>
+                                <input id="slider-pitch" type="range" min="-30" max="30" value="4" class="w-full accent-cyan-400 bg-white/10 rounded h-1.5 cursor-pointer">
+                            </div>
+
+                            <!-- Roll Slider -->
+                            <div>
+                                <div class="flex justify-between text-xs font-mono text-gray-300 mb-1">
+                                    <span>BANK / ROLL</span>
+                                    <span id="label-roll">-2°</span>
+                                </div>
+                                <input id="slider-roll" type="range" min="-45" max="45" value="-2" class="w-full accent-cyan-400 bg-white/10 rounded h-1.5 cursor-pointer">
+                            </div>
+
+                            <!-- Altitude Slider -->
+                            <div>
+                                <div class="flex justify-between text-xs font-mono text-gray-300 mb-1">
+                                    <span>ALTITUDE (AGL)</span>
+                                    <span id="label-alt">1,420 m</span>
+                                </div>
+                                <input id="slider-alt" type="range" min="100" max="4000" step="50" value="1420" class="w-full accent-cyan-400 bg-white/10 rounded h-1.5 cursor-pointer">
+                            </div>
+
+                            <!-- Scan Wireframe Toggle -->
+                            <div class="pt-2 flex items-center justify-between border-t border-white/10">
+                                <span class="text-xs font-mono text-gray-300">3D POINT-CLOUD MESH</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="toggle-mesh" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-cyan"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Telemetry readout summary -->
+                        <div class="p-4 rounded-xl border border-white/10 bg-brand-base font-mono text-xs text-gray-400 space-y-1">
+                            <div class="text-brand-cyan font-bold">CALIBRATION CONSTANTS:</div>
+                            <div>SLAM Matrix: <span class="text-white">v4.1.9 Quaternion Locked</span></div>
+                            <div>Point Density: <span class="text-white">2.8M pts/sec</span></div>
+                            <div>Latency: <span class="text-emerald-400">12ms glass-to-glass</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tech" class="py-28 px-4 sm:px-8 bg-brand-base relative z-20">
+        <div class="max-w-7xl mx-auto">
+            <div class="max-w-3xl mb-16 reveal">
+                <span class="font-mono text-xs text-brand-cyan tracking-widest uppercase">The Breakthrough</span>
+                <h2 class="font-display text-3xl sm:text-5xl font-bold text-white mt-2 mb-4">The Omnisight Core Architecture</h2>
+                <p class="text-gray-400 leading-relaxed text-sm sm:text-base">
+                    Traditional drones rely exclusively on fragile GPS constellations and cloud servers. Omnisight crafts carry dedicated on-edge neural computing to map, decide, and navigate completely offline in total communications silence.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Pillar 1 -->
+                <div class="glass-panel p-6 rounded-2xl hover:border-brand-cyan/40 transition-all duration-300 reveal delay-100 group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white mb-2">GPS-Denied Visual SLAM</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Navigates dense forests, mountain ravines, and actively jammed electronic warfare zones using visual odometry and edge optical flow without external satellite lock.
+                    </p>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="glass-panel p-6 rounded-2xl hover:border-brand-cyan/40 transition-all duration-300 reveal delay-200 group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white mb-2">In-Flight 3D Mesh Engine</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Generates millimeter-accurate OBJ and LAS point clouds mid-flight. Receive fully rendered topographical meshes on your ground station seconds before the aircraft lands.
+                    </p>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="glass-panel p-6 rounded-2xl hover:border-brand-cyan/40 transition-all duration-300 reveal delay-300 group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white mb-2">Zero-Trust Telemetry</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Hardware secure enclave ensures end-to-end cryptographic control. Signal hijacking, GPS spoofing, and rogue remote takeovers are neutralized at the firmware tier.
+                    </p>
+                </div>
+
+                <!-- Pillar 4 -->
+                <div class="glass-panel p-6 rounded-2xl hover:border-brand-cyan/40 transition-all duration-300 reveal delay-400 group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white mb-2">Open API & Hot-Swap Bay</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        Reject proprietary walled gardens. Integrate gas sensors, multispectral cameras, searchlights, or custom Python autonomous routes through our open SDK.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="specs" class="py-24 px-4 sm:px-8 bg-[#07090d] border-t border-white/10 relative z-20">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="font-mono text-xs text-brand-cyan tracking-widest uppercase">Benchmark Evaluation</span>
+                <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mt-1">Platform Technical Matrix</h2>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="glass-panel rounded-2xl overflow-hidden border border-white/10 reveal">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead>
+                            <tr class="border-b border-white/10 bg-white/5 text-gray-300 uppercase">
+                                <th class="p-4 sm:p-5">System Attribute</th>
+                                <th class="p-4 sm:p-5 text-red-400">ARES (Tactical / Defense)</th>
+                                <th class="p-4 sm:p-5 text-brand-cyan">NOMAD (Explorer / Mapping)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 text-gray-300">
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Take-off Weight (MTOW)</td>
+                                <td class="p-4 sm:p-5 text-white">6.4 kg (Exoskeleton armored)</td>
+                                <td class="p-4 sm:p-5 text-brand-cyan font-bold">&lt; 249 g (No license required)</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Max Flight Endurance</td>
+                                <td class="p-4 sm:p-5">38 Minutes (Dual Li-HV)</td>
+                                <td class="p-4 sm:p-5 text-white">47 Minutes (High-density solid state)</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Top Airspeed</td>
+                                <td class="p-4 sm:p-5 text-red-400 font-bold">140 km/h (87 mph) Dash</td>
+                                <td class="p-4 sm:p-5">72 km/h (45 mph)</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Primary Perception Sensor</td>
+                                <td class="p-4 sm:p-5">FLIR Boson 640 Thermal + 360° LiDAR</td>
+                                <td class="p-4 sm:p-5">Sony 1" 8K Starlight + Dual Stereo Cameras</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Encrypted Data Link</td>
+                                <td class="p-4 sm:p-5">AES-256 + Frequency Hopping FHSS</td>
+                                <td class="p-4 sm:p-5">OcuSync Dual-Band Wi-Fi 7 + AES-128</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Operating Temp Range</td>
+                                <td class="p-4 sm:p-5">-30°C to +55°C (Heated battery bay)</td>
+                                <td class="p-4 sm:p-5">-10°C to +40°C</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-4 sm:p-5 font-medium text-white">Edge Processing Unit</td>
+                                <td class="p-4 sm:p-5">Dual NVIDIA Jetson Orin Industrial</td>
+                                <td class="p-4 sm:p-5">Omni-Micro Neural Engine (60 TOPS)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-brand-base border-t border-white/10 py-12 px-6 relative z-20 text-xs font-mono text-gray-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-brand-cyan"></div>
+                <span class="text-white font-bold tracking-wider">OMNISIGHT DRONES</span>
+            </div>
+            <div class="flex gap-6">
+                <a href="#hero" class="hover:text-brand-cyan transition-colors">Telemetry</a>
+                <a href="#models" class="hover:text-brand-cyan transition-colors">Aircraft</a>
+                <a href="#sim-hud" class="hover:text-brand-cyan transition-colors">Simulator</a>
+                <a href="#tech" class="hover:text-brand-cyan transition-colors">Core Architecture</a>
+            </div>
+            <div>
+                <span>&copy; 2026 Omnisight Dynamics. All Rights Reserved.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot Toggle Button -->
+    <button type="button" id="chat-toggle-btn" class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-brand-cyan text-black shadow-[0_0_25px_rgba(0,242,254,0.4)] hover:scale-105 hover:bg-cyan-300 transition-all flex items-center justify-center group" aria-label="Open Omni AI">
+        <svg class="w-6 h-6 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+        </svg>
+        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+        </span>
+    </button>
+
+    <!-- Chatbot Flyout Panel -->
+    <div id="chat-box" class="fixed bottom-24 right-6 z-40 w-[380px] max-w-[calc(100vw-2rem)] h-[540px] max-h-[75vh] glass-panel-glow rounded-3xl flex flex-col overflow-hidden border border-brand-cyan/30 shadow-2xl transition-all duration-300 origin-bottom-right scale-0 opacity-0 pointer-events-none">
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-white/10 bg-brand-dark/90 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="relative w-7 h-7 rounded-lg bg-brand-cyan/20 border border-brand-cyan/50 flex items-center justify-center">
+                    <span class="w-2 h-2 rounded-full bg-brand-cyan animate-pulse"></span>
+                </div>
+                <div>
+                    <h4 class="font-display font-bold text-sm text-white flex items-center gap-1.5">
+                        OMNI AI
+                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-cyan/20 text-brand-cyan">GEMINI</span>
+                    </h4>
+                    <p class="text-[10px] font-mono text-gray-400">Aviation Systems & Spec Advisor</p>
+                </div>
+            </div>
+            <button type="button" id="chat-close-btn" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 font-sans text-xs">
+            <div class="self-start p-3.5 rounded-2xl rounded-tl-sm bg-white/5 border border-white/10 text-gray-200 leading-relaxed max-w-[90%]">
+                Greetings. I am <strong class="text-brand-cyan">OMNI AI</strong>, Omnisight's aviation systems and drone advisor. Ask me about ARES, NOMAD, LiDAR, photogrammetry or Visual SLAM.
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div id="quick-prompts" class="pt-2 flex flex-wrap gap-1.5 font-mono text-[10px]">
+                <button type="button" onclick="sendQuickPrompt('What is the difference between ARES and NOMAD?')" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-brand-cyan/40 text-gray-300 hover:text-brand-cyan transition-all">
+                    ⚔️ ARES vs NOMAD?
+                </button>
+                <button type="button" onclick="sendQuickPrompt('Compare Ares vs Nomad in cold alpine conditions')" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-brand-cyan/40 text-gray-300 hover:text-brand-cyan transition-all">
+                    ❄️ Cold weather performance?
+                </button>
+                <button type="button" onclick="sendQuickPrompt('Explain GPS-denied Visual SLAM autonomy')" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-brand-cyan/40 text-gray-300 hover:text-brand-cyan transition-all">
+                    📡 How does Visual SLAM work?
+                </button>
+                <button type="button" onclick="sendQuickPrompt('What payloads can be mounted on ARES?')" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-brand-cyan/40 text-gray-300 hover:text-brand-cyan transition-all">
+                    🎯 Ares payload options?
+                </button>
+                <button type="button" onclick="sendQuickPrompt('What is NOMAD designed for?')" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-brand-cyan/40 text-gray-300 hover:text-brand-cyan transition-all">
+                    🧭 What is NOMAD for?
+                </button>
+                <button type="button" onclick="sendQuickPrompt('How does LiDAR mapping work?')" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-brand-cyan/40 text-gray-300 hover:text-brand-cyan transition-all">
+                    🛰️ How does LiDAR mapping work?
+                </button>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="typing-indicator" class="hidden px-5 py-2 font-mono text-[11px] text-brand-cyan flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0.2s]"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0.4s]"></span>
+            <span class="text-gray-400">Processing telemetry query...</span>
+        </div>
+
+        <!-- Input Box -->
+        <div class="p-3 border-t border-white/10 bg-brand-dark/95">
+            <!-- onsubmit="return false" is only a no-JS/early-error safety net: a form submit must never navigate. The real handler is in the OMNI AI script below. -->
+            <form id="chat-form" class="flex gap-2" action="javascript:void(0)" onsubmit="return false;" novalidate autocomplete="off">
+                <input type="text" id="chat-input" aria-label="Ask OMNI AI" placeholder="Ask OMNI AI about ARES, NOMAD, LiDAR, SLAM..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-brand-cyan/60 transition-colors font-sans">
+                <button type="submit" class="px-4 py-2.5 bg-brand-cyan text-black rounded-xl font-bold hover:bg-cyan-300 transition-colors flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Background Video Counter (video stays muted, autoplay & looping)
+            const bgVideo = document.getElementById('bg-drone-video');
+            const videoTimer = document.getElementById('video-timer');
+
+            // Timer update
+            if (bgVideo && videoTimer) {
+                bgVideo.addEventListener('timeupdate', () => {
+                    const totalSec = Math.floor(bgVideo.currentTime);
+                    const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+                    const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+                    const secs = String(totalSec % 60).padStart(2, '0');
+                    videoTimer.textContent = `${hrs}:${mins}:${secs}`;
+                });
+            }
+
+            // 2. Scroll Reveal Observer
+            const reveals = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+            reveals.forEach(el => observer.observe(el));
+
+            // 3. Live Simulated Telemetry Jitter in Hero
+            setInterval(() => {
+                const altElem = document.getElementById('tele-alt');
+                if (altElem) {
+                    const jitter = 2840 + Math.floor(Math.random() * 8);
+                    altElem.textContent = `${jitter.toLocaleString()} M MSL`;
+                }
+                const battElem = document.getElementById('tele-battery');
+                if (battElem && Math.random() > 0.8) {
+                    battElem.textContent = `87% [${(24.7 + Math.random() * 0.2).toFixed(1)}V]`;
+                }
+            }, 1200);
+
+            // 4. Interactive HUD Flight Canvas & Scanner Simulation
+            const canvas = document.getElementById('hud-canvas');
+            const ctx = canvas.getContext('2d');
+            const sliderPitch = document.getElementById('slider-pitch');
+            const sliderRoll = document.getElementById('slider-roll');
+            const sliderAlt = document.getElementById('slider-alt');
+            const toggleMesh = document.getElementById('toggle-mesh');
+
+            const labelPitch = document.getElementById('label-pitch');
+            const labelRoll = document.getElementById('label-roll');
+            const labelAlt = document.getElementById('label-alt');
+
+            const hudPitchVal = document.getElementById('hud-pitch-val');
+            const hudRollVal = document.getElementById('hud-roll-val');
+            const hudAltVal = document.getElementById('hud-alt-val');
+
+            const btnRgb = document.getElementById('btn-mode-rgb');
+            const btnLidar = document.getElementById('btn-mode-lidar');
+            const btnThermal = document.getElementById('btn-mode-thermal');
+            const hudModeBadge = document.getElementById('hud-mode-badge');
+            const hudModeText = document.getElementById('hud-mode-text');
+
+            let visionMode = 'rgb'; // 'rgb', 'lidar', 'thermal'
+
+            function setVisionMode(mode) {
+                visionMode = mode;
+                [btnRgb, btnLidar, btnThermal].forEach(b => {
+                    b.className = 'py-2 text-xs font-mono rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all';
+                });
+
+                if (mode === 'rgb') {
+                    btnRgb.className = 'py-2 text-xs font-mono rounded-lg bg-brand-cyan text-black font-bold transition-all';
+                    hudModeBadge.className = 'w-2 h-2 rounded-full bg-brand-cyan';
+                    hudModeText.textContent = 'RGB OPTICAL';
+                } else if (mode === 'lidar') {
+                    btnLidar.className = 'py-2 text-xs font-mono rounded-lg bg-emerald-400 text-black font-bold transition-all';
+                    hudModeBadge.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                    hudModeText.textContent = '360° LIDAR POINT-CLOUD';
+                } else if (mode === 'thermal') {
+                    btnThermal.className = 'py-2 text-xs font-mono rounded-lg bg-red-500 text-white font-bold transition-all';
+                    hudModeBadge.className = 'w-2 h-2 rounded-full bg-red-500';
+                    hudModeText.textContent = 'FLIR THERMAL [WHITE-HOT]';
+                }
+            }
+
+            btnRgb.addEventListener('click', () => setVisionMode('rgb'));
+            btnLidar.addEventListener('click', () => setVisionMode('lidar'));
+            btnThermal.addEventListener('click', () => setVisionMode('thermal'));
+
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = rect.height * window.devicePixelRatio;
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            let scanOffset = 0;
+
+            function renderHUD() {
+                const w = canvas.getBoundingClientRect().width;
+                const h = canvas.getBoundingClientRect().height;
+                ctx.clearRect(0, 0, w, h);
+
+                const pitch = parseFloat(sliderPitch.value);
+                const roll = parseFloat(sliderRoll.value);
+                const alt = parseFloat(sliderAlt.value);
+                const showMesh = toggleMesh.checked;
+
+                // Sync display text
+                labelPitch.textContent = `${pitch > 0 ? '+' : ''}${pitch}°`;
+                labelRoll.textContent = `${roll > 0 ? '+' : ''}${roll}°`;
+                labelAlt.textContent = `${alt.toLocaleString()} m`;
+
+                hudPitchVal.textContent = `${pitch > 0 ? '+' : ''}${pitch.toFixed(1)}°`;
+                hudRollVal.textContent = `${roll > 0 ? '+' : ''}${roll.toFixed(1)}°`;
+                hudAltVal.textContent = `${alt.toLocaleString()} m`;
+
+                // 1. Draw Simulated Background Sky/Terrain
+                if (visionMode === 'rgb') {
+                    ctx.fillStyle = '#0a1017';
+                    ctx.fillRect(0, 0, w, h);
+                } else if (visionMode === 'lidar') {
+                    ctx.fillStyle = '#040b07';
+                    ctx.fillRect(0, 0, w, h);
+                } else {
+                    ctx.fillStyle = '#16080a';
+                    ctx.fillRect(0, 0, w, h);
+                }
+
+                // 2. Draw 3D Wireframe Mountain Topography Mesh if enabled
+                if (showMesh) {
+                    scanOffset += 0.8;
+                    ctx.save();
+                    ctx.lineWidth = 1;
+                    if (visionMode === 'rgb') ctx.strokeStyle = 'rgba(0, 242, 254, 0.35)';
+                    else if (visionMode === 'lidar') ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+                    else ctx.strokeStyle = 'rgba(255, 51, 68, 0.45)';
+
+                    const rows = 18;
+                    const cols = 28;
+                    const horizonY = h * 0.55 + pitch * 2;
+
+                    for (let r = 0; r < rows; r++) {
+                        ctx.beginPath();
+                        const z = r * 16 + (scanOffset % 16);
+                        const y = horizonY + (z * z * 0.012);
+
+                        for (let c = 0; c <= cols; c++) {
+                            const x = (c / cols) * w;
+                            const peak = Math.sin((c * 0.6) + (r * 0.3)) * (25 - r);
+                            const finalY = y + peak;
+                            if (c === 0) ctx.moveTo(x, finalY);
+                            else ctx.lineTo(x, finalY);
+                        }
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
+                // 3. Draw Artificial Horizon & Pitch Ladder
+                ctx.save();
+                ctx.translate(w / 2, h / 2);
+                ctx.rotate((roll * Math.PI) / 180);
+
+                const hudColor = visionMode === 'lidar' ? '#10b981' : (visionMode === 'thermal' ? '#ff3344' : '#00f2fe');
+                ctx.strokeStyle = hudColor;
+                ctx.fillStyle = hudColor;
+                ctx.lineWidth = 1.5;
+
+                // Center bore sight reticle
+                ctx.beginPath();
+                ctx.arc(0, 0, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(-30, 0); ctx.lineTo(-10, 0);
+                ctx.moveTo(10, 0); ctx.lineTo(30, 0);
+                ctx.stroke();
+
+                // Pitch rungs
+                const pitchOffset = pitch * 3;
+                [-20, -10, 10, 20].forEach(deg => {
+                    const rungY = (deg * 3) - pitchOffset;
+                    ctx.beginPath();
+                    ctx.moveTo(-25, rungY); ctx.lineTo(25, rungY);
+                    ctx.moveTo(-25, rungY); ctx.lineTo(-25, rungY + (deg > 0 ? 5 : -5));
+                    ctx.moveTo(25, rungY); ctx.lineTo(25, rungY + (deg > 0 ? 5 : -5));
+                    ctx.stroke();
+                    ctx.font = '9px monospace';
+                    ctx.fillText(deg.toString(), 30, rungY + 3);
+                });
+
+                ctx.restore();
+
+                requestAnimationFrame(renderHUD);
+            }
+
+            [sliderPitch, sliderRoll, sliderAlt, toggleMesh].forEach(input => {
+                input.addEventListener('input', () => {});
+            });
+            renderHUD();
+
+        });
+    </script>
+
+    <!-- OMNI AI knowledge base: embedded copy of antigravity_knowledge_base.md, so the bot also works when this page is opened straight from disk (file://), where fetch() of local files is blocked. -->
+    <script type="text/plain" id="omni-kb">
+# OMNISIGHT DRONES — OMNI AI KNOWLEDGE BASE
+
+> **How to read this document.** This is the source of truth for OMNI AI. Everything here comes from the "Project Omnisight" strategy / technical document (the PDF), except items tagged **[Website]**, which come from the specification cards and spec matrix published on the Omnisight website. All prices are in Indian Rupees (INR, ₹). Prices and financials are *conceptual estimates*.
+
+---
+
+## 1. Company / Platform Overview
+
+* **Omnisight Drones** is a dual-market drone platform built on a **"shared core, divergent shell"** strategy (the PDF calls the programme **"Project Omnisight"**).
+* One unified software and navigation "brain" powers two distinct hardware product lines:
+  * **ARES** — a rugged, secure **tactical / defense** drone for military use.
+  * **NOMAD** — an intuitive, lightweight **traveler / explorer** drone for civilians.
+* The business is effectively **two businesses under one roof**: a consumer (traveler) business and a defense (military) business.
+* Website tagline: **"Master the Air. Map the Ground."** **[Website]**
+* Website positioning: a unified drone architecture using real-time SLAM, LiDAR topography and military-grade autonomy for tactical reconnaissance and exploration. **[Website]**
+* Brand direction (PDF): a **design-first** brand — aerospace engineering combined with high-end industrial design. The tactical drone should look aggressive and stealthy; the software should feel like a high-end graphic design tool.
+* Strategic thesis (PDF): to beat the large incumbents (e.g. DJI, Skydio) Omnisight does not need a better motor; it needs a vastly superior way for users to interact with the drone and the 3D data it collects.
+
+---
+
+## 2. Shared Omnisight Core Architecture
+
+* Both drones share one core technology stack:
+  * **Night-vision optics**
+  * A built-in **3D scanner** (LiDAR or photogrammetry)
+  * A **dual-navigation system** using both **GPS** and **visual/inertial odometry (SLAM)** for places where GPS is blocked or unavailable
+* The same technologies are applied very differently in each model:
+
+| Core capability | ARES (tactical) | NOMAD (civilian) |
+|---|---|---|
+| 3D environment scanner | High-resolution **LiDAR** | **Photogrammetry** |
+| Night vision | Military-grade **infrared + thermal** imaging | Low-light **starlight sensors** (no heavy thermal camera) |
+| GPS-denied navigation | Advanced **SLAM** + **encrypted inertial navigation** | **Optical-flow sensors** that track the ground |
+| Build | Radar-absorbent materials, low-acoustic rotors, anti-jamming encrypted links | Foldable, lightweight (**under 250 g**), smartphone-app control with automated cinematic flight paths |
+
+* **Omnisight Core on the website [Website]:** a dedicated on-edge neural processor that lets the aircraft map, decide and navigate completely **offline**, without relying on GPS constellations or cloud servers. Four published pillars:
+  * **GPS-Denied Visual SLAM** — navigates dense forests, mountain ravines and jammed electronic-warfare zones using visual odometry and edge optical flow, with no external satellite lock.
+  * **In-Flight 3D Mesh Engine** — generates OBJ and LAS point clouds mid-flight; rendered topographical meshes reach the ground station seconds before the aircraft lands.
+  * **Zero-Trust Telemetry** — a hardware secure enclave provides end-to-end cryptographic control against signal hijacking, GPS spoofing and rogue takeovers.
+  * **Open API & Hot-Swap Bay** — integrate gas sensors, multispectral cameras, searchlights or custom Python autonomous routes through an open SDK.
+
+---
+
+## 3. ARES — Tactical / Defense Drone
+
+**Purpose (PDF):** designed for **forward reconnaissance, threat detection and covert operations**.
+
+* **3D environment scanner:** high-resolution **LiDAR** that instantly generates topographical maps and detects anomalies in real time — for example camouflaged enemies, hidden bunkers or tripwires.
+* **Night vision & thermal:** military-grade infrared and thermal imaging that can spot body heat through foliage or smoke.
+* **GPS-denied navigation:** advanced **SLAM** plus encrypted inertial navigation. If an enemy jams the GPS signal, the drone keeps flying autonomously by reading the physical environment.
+* **Build & security:** radar-absorbent materials, **low-acoustic rotors (silent flight)** and **anti-jamming encrypted communication links**.
+* **Capabilities the PDF says a modern military-grade drone must have** (it "cannot simply be a commercial drone painted camouflage"; it must be engineered around survivability, secure data transmission and precision in hostile environments):
+  * **GPS-denied navigation** — IMUs (position from acceleration and rotation) plus Visual SLAM (onboard cameras read the terrain and match it against pre-loaded maps).
+  * **Secure, anti-jamming datalinks** — frequency hopping (the link rapidly switches frequencies several times per second) and military-grade encryption for video and telemetry.
+  * **Advanced multi-spectral payloads** — EO/IR (high-resolution daytime camera combined with thermal imaging); laser target designators are listed as a general military-drone capability.
+  * **Electronic-warfare (EW) hardening** — MIL-STD shielding against electromagnetic interference, radar jammers and directed-energy weapons.
+  * **Low acoustic and thermal signatures** — acoustic dampening (special rotor blades and motors) and thermal masking (shielding battery and motor heat).
+* **"Ghost Mode" autonomy (proposed feature):** if ARES detects that radio and GPS are being jammed, it switches to Ghost Mode — it reads the terrain with its cameras, matches it to a pre-loaded offline map and silently flies back to base on visual autopilot.
+* **Published ARES specifications [Website]:**
+  * Designation: OMNISIGHT-DEFENSE // MK-IV; marketed as **MIL-SPEC certified**
+  * Starting price: **₹8,99,000**
+  * Take-off weight: **6.4 kg** (exoskeleton armored)
+  * Max flight endurance: **38 minutes** (dual Li-HV batteries)
+  * Top airspeed: **140 km/h** (87 mph) dash
+  * Payload: **4.2 kg**
+  * Max range: **28 km**
+  * Perception sensors: **FLIR Boson 640 thermal + 360° LiDAR**, plus a 640x512 night-vision pod
+  * Data link: **AES-256** quantum-resistant encrypted telemetry with **frequency-hopping FHSS (900 MHz / 2.4 GHz)**
+  * Airframe: carbon-titanium exo-frame rated **IP67** all-weather
+  * Operating temperature: **-30 °C to +55 °C** (heated battery bay)
+  * Edge processing: **dual NVIDIA Jetson Orin Industrial**
+  * Described as able to map subterranean tunnels autonomously
+* **ARES economics (PDF):**
+  * Estimated manufacturing cost (COGS): **₹4,50,000 – ₹8,00,000 per unit**
+  * Cost breakdown: mil-spec carbon-fiber frame (₹40,000), high-end thermal/IR camera payload (₹2,00,000+), high-resolution LiDAR scanner (₹1,40,000), encrypted anti-jamming radio link (₹1,20,000), hardened compute module for SLAM / GPS-denied flight (₹50,000), MIL-STD testing and assembly (₹60,000)
+  * Suggested selling price: **₹8,00,000 – ₹13,00,000+** (starting price **₹8,99,000**)
+  * Gross margin: **35% – 55%**
+  * Software licence: **₹89,999 per year, per drone** (see section 16)
+  * Industry context: tactical drones such as the FLIR Black Hornet or Skydio X2D can sell for tens of lakhs of rupees per unit, because the military pays for proprietary software and a secure supply chain, not just plastic and wires.
+
+---
+
+## 4. NOMAD — Traveler / Explorer Drone
+
+**Purpose (PDF):** designed for **content creators, hikers and off-grid adventurers**.
+
+* **3D environment scanner:** uses **photogrammetry** to map a hiking trail, a ruined castle or a campsite, so users can create **3D models of their travels** for virtual reality or social media.
+* **Night vision:** **low-light starlight sensors** for nocturnal wildlife, stargazing, or navigating back to camp after dark — without relying on heavy thermal cameras.
+* **GPS-denied navigation:** **optical-flow sensors** track the ground, so the drone can follow the traveler through dense forests or deep canyons where satellite signals cannot penetrate.
+* **Build & interface:** **foldable and lightweight — under 250 grams** (to bypass strict aviation regulations in many countries), controlled through an intuitive **smartphone app** with **automated cinematic flight paths**.
+* **Published NOMAD specifications [Website]:**
+  * Designation: OMNISIGHT-CIVIL // MK-II; marketed as DGCA nano-class (under 250 g)
+  * Starting price: **₹1,49,999**
+  * Take-off weight: **249 g** (listed as no licence required)
+  * Max flight endurance: **47 minutes** (high-density solid-state battery)
+  * Top airspeed: **72 km/h** (45 mph)
+  * Video: **8K RAW**
+  * Perception sensors: **Sony 1-inch 8K starlight sensor (f/1.8)** plus dual stereo cameras
+  * Data link: OcuSync dual-band Wi-Fi 7 with AES-128
+  * Operating temperature: **-10 °C to +40 °C**
+  * Edge processing: Omni-Micro Neural Engine (**60 TOPS**)
+  * Features: onboard photogrammetry 3D-mesh generator; autonomous orbit, waypoint and cable-cam cinematic modes
+  * Suggested uses: alpine expeditions, geological research and cinematographers mapping deep backcountry
+* **NOMAD economics (PDF):**
+  * Estimated manufacturing cost (COGS): **₹35,000 – ₹55,000 per unit**
+  * Cost breakdown: lightweight carbon/plastic frame and standard brushless motors (₹6,000), lithium-ion battery (₹7,000), optical camera / starlight sensor (₹13,000), basic photogrammetry compute module (₹9,000), standard radio controller (₹6,000), packaging and assembly (₹9,000)
+  * Suggested selling price: **₹1,25,000 – ₹1,75,000** (starting price **₹1,49,999**) — positioned as a premium "prosumer" tool, competitive with high-end travel and photography drones
+  * Gross margin: **55% – 70%**
+  * Net margin after marketing, retail/distributor cuts and customer support: typically around **10% – 15%**
+  * Cloud subscription: **₹1,499 per month** (see section 16)
+
+---
+
+## 5. ARES vs NOMAD
+
+* **Same brain, different shell:** both run the shared Omnisight Core (night vision + 3D scanning + GPS/SLAM dual navigation) but are built for opposite environments.
+
+| Attribute | ARES | NOMAD |
+|---|---|---|
+| Market | Tactical / defense (military) | Civilian traveler / explorer / creator |
+| Mission | Reconnaissance, threat detection, covert operations | Travel capture, exploration, 3D models of places, cinematic video |
+| 3D scanning | High-resolution **LiDAR** | **Photogrammetry** |
+| Night vision | Military infrared + **thermal** | **Starlight** low-light sensor (no thermal) |
+| GPS-denied navigation | Advanced **SLAM** + encrypted inertial navigation | **Optical-flow** ground tracking |
+| Communications | Encrypted, **anti-jamming** (frequency hopping, AES-256) | Smartphone app link |
+| Build | Radar-absorbent materials, silent low-acoustic rotors, rugged IP67 exo-frame | Foldable, lightweight, under 250 g |
+| Weight **[Website]** | 6.4 kg | 249 g |
+| Endurance **[Website]** | 38 min | 47 min |
+| Top speed **[Website]** | 140 km/h | 72 km/h |
+| Operating temperature **[Website]** | -30 °C to +55 °C, heated battery bay | -10 °C to +40 °C |
+| Starting price | **₹8,99,000** | **₹1,49,999** |
+| Recurring software | ₹89,999 / year per drone | ₹1,499 / month |
+| Gross margin | 35% – 55% | 55% – 70% |
+
+* **Cold alpine conditions:** by the published spec matrix **[Website]**, ARES is rated to a colder limit (-30 °C, with a heated battery bay) than NOMAD (-10 °C). NOMAD is better suited to lightweight alpine mapping and expedition capture within its own range; no further cold-weather performance data is provided.
+* **Do not treat them as identical hardware:** ARES is a survivability-oriented tactical platform; NOMAD is a portable creator/explorer platform.
+
+---
+
+## 6. LiDAR Technology
+
+* **LiDAR** stands for **Light Detection and Ranging**: a remote-sensing method that creates digital **3D replicas of the real world**.
+* Like radar, it sends out a **pulse** that is reflected back to the sensor when it bounces off a surface; the time taken to return measures distance.
+* It has been a constant in surveyors' toolkits since the **1980s**. It began as the **Terrestrial Laser Scanner (TLS)**, an accurate static solution; **SLAM** later made it possible to map handheld, on vehicles or by drone.
+* **A LiDAR drone** is any aerial drone with a LiDAR sensor mounted to it — either an attached handheld LiDAR device or a permanent feature of the drone (for example Flyability's Elios 3).
+* **Strength with vegetation:** the laser penetrates gaps between foliage and can map the ground below, which makes LiDAR useful in dense-vegetation areas that are hard for other scanning methods.
+* **ARES uses LiDAR** for topographical maps and for detecting anomalies such as camouflaged enemies, hidden bunkers and tripwires. **[Website]** ARES carries a 360° LiDAR.
+* **Practical tips:**
+  * **Altitude:** a drone does not need to fly close to the ground for accurate LiDAR data, but lower altitude gives a higher point-cloud density.
+  * **Georeferencing:** SLAM does not need GPS, but reflective targets are an ideal way to obtain georeferenced data.
+
+---
+
+## 7. Photogrammetry
+
+* In **photogrammetry**, a drone captures **many overlapping images** over the mapped area so that every point on the ground is visible from multiple angles and viewpoints.
+* Those overlapping views provide the detail needed to build a **3D model**, including **elevation and shape**.
+* **Compared with LiDAR:** photogrammetry is **less accurate**, but it gives a **richer visual of the area through colour**.
+* **Combined approach:** a LiDAR drone using photogrammetry as well can produce a more complete, **coloured point cloud**.
+* **NOMAD uses photogrammetry** to map hiking trails, ruined castles and campsites and turn them into shareable 3D models for VR or social media. **[Website]** NOMAD has an onboard photogrammetry 3D-mesh generator.
+* The PDF's design principle for 3D output: a traveler who scans a ruin should get a smooth, animated, shareable 3D asset.
+
+---
+
+## 8. SLAM / GPS-Denied Navigation
+
+* **SLAM = Simultaneous Localization and Mapping:** mapping an area while keeping track of the device's own location within it.
+* SLAM **does not require satellites**, so it suits indoor and underground environments, and it lets users map underground, overground, or move seamlessly between the two. It makes mapping mines and caves possible.
+* **Visual SLAM** has matured significantly in the last five years: drones can now navigate underground, indoors or in electronically jammed environments by "seeing" their surroundings.
+* **Why it matters:** in modern warfare GPS is routinely **jammed or spoofed** by electronic-warfare systems, so a military drone must navigate without satellite guidance.
+* **Building blocks:**
+  * **IMUs (Inertial Measurement Units):** internal sensors that calculate position from acceleration and rotation.
+  * **Visual SLAM:** onboard cameras read the terrain and match it against pre-loaded maps to hold course.
+* **ARES:** advanced SLAM with encrypted inertial navigation; "Ghost Mode" is the proposed fallback that flies home on visual autopilot using a pre-loaded offline map when radio and GPS are jammed.
+* **NOMAD:** **optical-flow sensors** track the ground so the drone can follow a traveler through dense forests and deep canyons where satellite signals cannot reach.
+* **Dual navigation:** both drones combine GPS with visual/inertial odometry (SLAM).
+
+---
+
+## 9. Drone Mapping & 3D Scanning
+
+* **Two scanning methods:** LiDAR (accurate, works through foliage, ARES) and photogrammetry (colour-rich, NOMAD). They can be combined for a coloured point cloud.
+* **Flight patterns** (depend on terrain and mission):
+  * **Grid** — ideal for capturing large areas and ensuring coverage.
+  * **Round** — great for monuments or buildings, circling the object.
+  * **Comb** — ensures good coverage in irregular environments and helps with loop closure.
+* **Outputs [Website]:** OBJ and LAS point clouds generated mid-flight.
+* **Visualization philosophy (PDF):** raw LiDAR or photogrammetry data is useless if it is hard to read. Omnisight's software should render scans beautifully — a traveler's scan becomes a smooth, shareable animated 3D asset, while a soldier's scan of a treeline highlights anomalies intuitively.
+* **Why it matters:** the 3D scanning capability is the product's core feature and the basis of its higher-margin software business.
+
+---
+
+## 10. Use Cases
+
+* **ARES (military / tactical):**
+  * Forward reconnaissance and threat detection
+  * Covert operations (silent flight, low acoustic and thermal signature)
+  * Detecting camouflaged enemies, hidden bunkers and tripwires with LiDAR
+  * Spotting body heat through foliage or smoke with thermal imaging
+  * Flying in GPS-jammed airspace using SLAM
+  * Mapping subterranean tunnels **[Website]**
+  * Swarm roles: one drone as a secure high-altitude radio relay while another scans low to the ground
+* **NOMAD (civilian / traveler):**
+  * Content creators and hikers capturing cinematic video with automated flight paths
+  * 3D models of trails, ruined castles and campsites for VR or social media
+  * Nocturnal wildlife capture, stargazing and finding the way back to camp after dark (starlight sensor)
+  * Following the traveler through dense forests and deep canyons without GPS
+  * Alpine expeditions, geological research and backcountry mapping **[Website]**
+  * Swarm roles: two drones in a synchronized orbit for multi-angle cinematic shots without a camera crew
+
+---
+
+## 11. Industry Applications
+
+* **Where drone LiDAR surveying is used (PDF):**
+  * **Mining** — capturing unforgiving environments to show progress.
+  * **AEC (architecture, engineering, construction)** — repeatedly capturing sites from the air without disturbing work, to track change over time.
+  * **Forestry** — dense-canopy capture for deforestation and carbon measurements.
+  * **Heritage** — documenting historical sites and monuments with less invasive techniques.
+  * **Disaster management** — mapping damage (including nuclear disasters) and understanding areas for search and rescue.
+  * **Utilities** — repeat safe scans of powerlines and surroundings.
+* **Third-party examples from the reference article** (these are *not* Omnisight products): Shamrock+ (handheld LiDAR mounted on a Freefly drone), Visualskies (scans for National Geographic's *Lost Cities*, including a jungle-covered lost city in Micronesia), CPE Tecnologia (3D mapping of Christ the Redeemer in Brazil), InspecDrone (using Flyability's Elios 3 to model a cement plant in Harburg, Germany). Drones that can carry a ZEB Horizon scanner include the DJI M300 (55 min flight time, up to 2.7 kg payload), the Freefly Alta 8 / 8 Pro / X (Alta X carries up to 35 lb) and Flyability's Elios 3.
+* **Drone industry developments over the last five years (PDF):** autonomy and AI (machine-learning obstacle avoidance and subject tracking), matured GPS-denied Visual SLAM, military adoption and loitering munitions (notably in Ukraine, shifting focus to small, decentralized tactical quadcopters), and regulatory frameworks (remote ID and BVLOS certifications).
+* **Market size (PDF, Fortune Business Insights, approximate INR equivalents):**
+
+| Segment | 2025 valuation | 2026 projected | Growth |
+|---|---|---|---|
+| Total global drone market | ₹8.27 lakh crore | ₹9.07 lakh crore | ~9.6% CAGR |
+| Military drone market | ₹1.78 lakh crore | ₹2.02 lakh crore | ~11.1% CAGR |
+| Consumer drone market | ₹54,000 crore | ₹65,700 crore | ~14.1% CAGR |
+
+  * More than 62 countries increased tactical drone procurement in 2025.
+  * The global counter-drone market is projected to reach about ₹2.25 lakh crore by 2034.
+
+---
+
+## 12. Time-to-Data / Edge Processing
+
+* **The problem:** normally a drone lands, the SD card is pulled, plugged into a heavy laptop, and software takes hours to render a 3D map.
+* **Omnisight's answer — real-time edge rendering:** a compute module inside the drone processes the 3D photogrammetry or LiDAR data **during flight**. By the time the drone lands, a fully rendered, lightweight, web-ready 3D map has already been beamed to the user's smartphone or tactical tablet.
+* **Positioning:** Omnisight aims to be the **fastest "time-to-data" / "time-to-insight"** drone on the market — solving the whole workflow, not just the aircraft.
+* **[Website]:** the In-Flight 3D Mesh Engine delivers topographical meshes to the ground station seconds before landing; processing runs on dedicated edge hardware (dual NVIDIA Jetson Orin Industrial on ARES, 60-TOPS Omni-Micro Neural Engine on NOMAD).
+* **Interface:** responsive web-based mission-control dashboards (JavaScript/HTML5) so a commander or production crew can watch the feed from any browser on any tablet, without complicated installs.
+
+---
+
+## 13. Open Architecture / Modular Payloads
+
+* **Goal ("the Android of Drones"):** an airframe with **universal payload mounts** and an **open API**, in contrast to the closed "walled-garden" ecosystems of major brands (proprietary batteries, locked software, no custom sensors).
+* **Examples from the PDF:** a military unit could attach a custom gas-leak sensor; a traveler could snap on a retro cinematic lens. Letting the community build hardware and software add-ons creates fierce brand loyalty.
+* **[Website]:** the **Open API & Hot-Swap Bay** supports gas sensors, multispectral cameras, searchlights and custom Python autonomous routes via an open SDK.
+* **ARES payload:** **[Website]** payload capacity is **4.2 kg**. Built-in sensing payloads are the high-resolution LiDAR scanner and thermal/IR (FLIR Boson) camera with a night-vision pod; additional sensors can be added through the open payload architecture. A complete list of approved ARES payloads is not provided.
+
+---
+
+## 14. Data Sovereignty / Privacy-by-Design
+
+* **The market gap:** manufacturers such as DJI face bans or restrictions in the U.S., Europe and India over fears that flight logs and visual data are uploaded to foreign servers.
+* **Omnisight's positioning:** verifiable **"Privacy-by-Design"** with an absolute **"air-gap" guarantee** — zero telemetry, video or 3D-mapping data touches the cloud **unless the user explicitly commands it**.
+* **Why it matters:** strict data security, aligned with western military NDAA compliance standards, opens defense and infrastructure contracts that are legally closed to DJI products.
+* **[Website]:** Zero-Trust Telemetry with a hardware secure enclave, and the ability to navigate and map completely offline.
+
+---
+
+## 15. Swarm / Multi-Drone Concepts
+
+* **Concept ("Swarm UI"):** most drone interfaces are "one pilot, one drone"; Omnisight proposes swarm command software so **one operator can manage two or three drones at once**.
+* **Military example:** one drone sits high in the sky as a secure radio relay while another flies low to do the 3D scanning.
+* **Traveler example:** two drones fly a synchronized orbit around the traveler for complex multi-angle cinematic video without a camera crew.
+* This is a proposed product direction in the strategy document.
+
+---
+
+## 16. Business / Subscription Model
+
+* **Hardware + software:** hardware is becoming a low-margin commodity; the real profit comes from **software subscriptions (SaaS)**. The 3D scanning capability is the "golden ticket" to higher margins.
+
+| | NOMAD (traveler) | ARES (military) |
+|---|---|---|
+| Hardware starting price | **₹1,49,999** | **₹8,99,000** |
+| Recurring software | **₹1,499 / month** cloud subscription to process, render and store 3D terrain maps and cinematic videos | **₹89,999 / year** licensing fee per drone for proprietary AI threat-detection software and an encrypted fleet-management dashboard |
+| Hardware gross margin | 55% – 70% | 35% – 55% |
+
+* **Software margins** typically sit between **80% and 90%**.
+* **Strategy highlights:**
+  * Win on **software, UI and 3D visualization** — hardware is a commodity, but drone control software is often clunky and industrial.
+  * Hyper-target the **"data handoff"** — be the "fastest time-to-data" drone.
+  * Lean into a **design-first brand**.
+  * Competitors named: DJI and Skydio (large incumbents); DJI dominates the consumer market.
+* **Challenges for defense:** expensive certifications, smaller production batches, large R&D and compliance costs, and 2-to-3-year sales cycles before a first contract.
+
+---
+
+## 17. Known Product Limitations / Conceptual Constraints
+
+* **Conceptual stage:** Omnisight, ARES and NOMAD are presented as a product concept. All prices, margins and financials are **conceptual estimates**, not confirmed retail offers.
+* **Not covered by this knowledge base:** availability, ordering, delivery dates, warranty terms, official certifications, exact ARES camera resolutions, and approved accessory lists. For any of these, OMNI AI must say the information is not provided.
+* **Technology trade-offs:**
+  * Photogrammetry is **less accurate than LiDAR** (though it provides colour); LiDAR gives accuracy and works through foliage.
+  * LiDAR point-cloud **density depends on flight altitude** (lower altitude, higher density).
+  * SLAM does not require GPS but **georeferenced results need reflective targets**.
+  * NOMAD uses a **starlight sensor, not thermal imaging**; thermal and LiDAR are ARES capabilities.
+  * The PDF notes that prioritizing one subsystem in drone design affects the others, but gives no specific trade-off figures.
+* **Regulation:** the sub-250 g class is intended to bypass strict aviation rules "in many countries"; rules differ by country, so users should check local regulations.
+* **Margins:** consumer hardware has thin net margins (around 10% – 15% for NOMAD even with a 55% – 70% gross margin).
+    </script>
+
+    <!-- OMNI AI chatbot.
+         Deliberately its own script block, NOT inside the HUD/DOMContentLoaded block above. If anything earlier on the page throws, the chatbot
+         must still register its listeners; otherwise Enter in the input falls back to a native <form> submit (a full page reload). -->
+    <script>
+    (function initOmniAI() {
+        'use strict';
+        if (window.__omniAIInitialised) return;           // initialise exactly once
+        window.__omniAIInitialised = true;
+
+        const chatToggleBtn   = document.getElementById('chat-toggle-btn');
+        const chatCloseBtn    = document.getElementById('chat-close-btn');
+        const chatBox         = document.getElementById('chat-box');
+        const chatForm        = document.getElementById('chat-form');
+        const chatInput       = document.getElementById('chat-input');
+        const chatMessages    = document.getElementById('chat-messages');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        if (!chatToggleBtn || !chatCloseBtn || !chatBox || !chatForm || !chatInput || !chatMessages || !typingIndicator) {
+            console.error('OMNI AI: chatbot markup not found - chatbot not initialised.');
+            return;
+        }
+
+        const API_KEY = "AQ.Ab8RN6JXn7NoCKhNKXGGBHuKwS_6wcuZ8vhZWyBe1LNB2jEryg";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${API_KEY}`;
+
+        /* ---------- Knowledge base + system instruction ---------- */
+        const kbNode = document.getElementById('omni-kb');
+        let knowledgeBase = kbNode ? kbNode.textContent.trim() : '';
+
+        // When the page is served over http(s), prefer the live .md file so edits to it take effect without touching the HTML.
+        if (/^https?:$/.test(window.location.protocol)) {
+            fetch('antigravity_knowledge_base.md', { cache: 'no-store' })
+                .then(r => (r.ok ? r.text() : Promise.reject(new Error('KB http ' + r.status))))
+                .then(t => { if (/^#\s*OMNISIGHT/i.test(t.trim())) knowledgeBase = t.trim(); })
+                .catch(() => { /* keep the embedded copy */ });
+        }
+
+        const BASE_PROMPT = [
+            'You are OMNI AI, the official AI aviation and drone advisor for Omnisight Drones.',
+            '',
+            'Your primary products are ARES, a tactical/defense drone platform, and NOMAD, a civilian traveler/explorer drone platform. Both are built on the shared Omnisight Core ("shared core, divergent shell").',
+            '',
+            'SOURCE OF TRUTH',
+            '- Use the OMNISIGHT KNOWLEDGE BASE below as your primary source of truth.',
+            '- Answer questions about ARES, NOMAD, the shared Omnisight Core, LiDAR, photogrammetry, SLAM, GPS-denied navigation, autonomous flight, 3D scanning, mapping, applications, product differences, pricing, and anything else covered in the knowledge base.',
+            '- Do not invent technical specifications, prices, features or dates that are not supported by the knowledge base.',
+            '- When the information is not available, clearly say it is not provided in the current Omnisight knowledge base. Do not guess or use outside knowledge to fill the gap.',
+            '- If a question is unrelated to drones or Omnisight, politely steer back to Omnisight topics.',
+            '',
+            'PRODUCT RULES',
+            '- Keep ARES (tactical / defense: LiDAR, thermal/IR, SLAM, secure anti-jamming links, rugged build) and NOMAD (civilian / traveler: photogrammetry, starlight imaging, optical-flow navigation, under 250 g, cinematic flight) clearly distinct. When asked to compare them, explain the differences; never treat them as identical hardware.',
+            '- Never describe ARES or NOMAD as any other company\'s product.',
+            '- All prices are in Indian Rupees (INR, \u20b9). Quote them in Indian number formatting and never convert to another currency.',
+            '- Use the earlier conversation for follow-up questions (for example "it" or "that one").',
+            '',
+            'ANSWER FORMAT',
+            '- Give concise, useful answers suitable for a website visitor.',
+            '- Reply with exactly 2 to 3 short bullet points (never more than 3). No paragraphs, headings or tables.',
+            '- Use **bold** for key terms.'
+        ].join('\n');
+
+        function buildSystemInstruction() {
+            return { parts: [{ text: BASE_PROMPT + '\n\n--- OMNISIGHT KNOWLEDGE BASE ---\n' + knowledgeBase }] };
+        }
+
+        /* ---------- UI helpers ---------- */
+        let chatHistory = [];     // lives for the lifetime of the page; never reset when the panel is opened/closed
+        let isSending = false;    // one request at a time -> no duplicate API calls
+
+        const isOpen = () => !chatBox.classList.contains('scale-0');
+
+        function openChat() {
+            if (isOpen()) return;
+            chatBox.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+            chatInput.focus({ preventScroll: true });          // focusing must never scroll the page
+        }
+
+        function closeChat() {
+            if (!isOpen()) return;
+            chatBox.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+        }
+
+        function toggleChat() {
+            if (isOpen()) closeChat(); else openChat();
+        }
+
+        function renderMarkdown(text) {
+            if (window.marked && typeof window.marked.parse === 'function') {
+                try { return window.marked.parse(text); } catch (err) { console.warn('OMNI AI: markdown parse failed', err); }
+            }
+            // marked.js (CDN) unavailable: fall back to escaped plain text so the reply still shows
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
+        function appendMessage(text, sender) {
+            const msg = document.createElement('div');
+            if (sender === 'user') {
+                msg.className = 'self-end p-3 rounded-2xl rounded-tr-sm bg-brand-cyan/20 border border-brand-cyan/40 text-brand-cyan font-medium leading-relaxed max-w-[85%] ml-auto whitespace-pre-wrap';
+                msg.textContent = text;
+            } else {
+                msg.className = 'self-start p-3.5 rounded-2xl rounded-tl-sm bg-white/5 border border-white/10 text-gray-200 leading-relaxed max-w-[90%] whitespace-pre-wrap';
+                msg.innerHTML = renderMarkdown(text);
+            }
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        /* ---------- API ---------- */
+        async function requestGemini(userText) {
+            typingIndicator.classList.remove('hidden');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: buildSystemInstruction()
+            };
+
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 45000);
+
+            // A failed turn must not leave an unanswered user message in the history
+            const dropFailedTurn = () => {
+                if (chatHistory.length && chatHistory[chatHistory.length - 1].role === 'user') chatHistory.pop();
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+
+                if (!res.ok) throw new Error('API call failed (HTTP ' + res.status + ')');
+                const data = await res.json();
+                const parts = data.candidates?.[0]?.content?.parts || [];
+                const reply = parts.filter(p => p.text && !p.thought).map(p => p.text).join('');
+
+                if (reply) {
+                    chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+                    appendMessage(reply, 'model');
+                } else {
+                    dropFailedTurn();
+                    appendMessage('Telemetry telemetry lost. Please restate your inquiry.', 'model');
+                }
+            } catch (err) {
+                console.error('Gemini API Error:', err);
+                dropFailedTurn();
+                appendMessage('Interference detected on satellite frequency. Offline edge SLAM active.', 'model');
+            } finally {
+                clearTimeout(timer);
+                typingIndicator.classList.add('hidden');
+            }
+        }
+
+        // Single entry point used by the form, the quick-prompt chips and the ARES / NOMAD inquiry buttons.
+        async function sendChatMessage(rawText) {
+            const text = String(rawText == null ? '' : rawText).trim();
+            if (!text || isSending) return;                    // ignore empty input and overlapping requests
+            isSending = true;
+            try {
+                appendMessage(text, 'user');
+                chatInput.value = '';
+                chatHistory.push({ role: 'user', parts: [{ text: text }] });
+                await requestGemini(text);
+            } finally {
+                isSending = false;
+            }
+        }
+
+        /* ---------- Wiring (runs once) ---------- */
+        chatToggleBtn.addEventListener('click', function (e) { e.preventDefault(); toggleChat(); });
+        chatCloseBtn.addEventListener('click',  function (e) { e.preventDefault(); closeChat(); });
+
+        chatForm.addEventListener('submit', function (e) {
+            e.preventDefault();                                // AJAX only: never navigate
+            e.stopPropagation();
+            sendChatMessage(chatInput.value);
+        });
+
+        // Used by inline onclick="" attributes in the page (ARES / NOMAD cards and the quick-prompt chips).
+        window.askOmniAbout = function (topic) {
+            openChat();
+            return sendChatMessage(topic);
+        };
+
+        window.sendQuickPrompt = function (promptText) {
+            openChat();
+            return sendChatMessage(promptText);
+        };
+    })();
+    </script>
+</body>
+</html>
